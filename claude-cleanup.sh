@@ -121,12 +121,6 @@ if [[ "$confirm" != [yY] ]]; then
     exit 0
 fi
 
-# Back up claude.json
-if [[ -f "$CLAUDE_JSON" ]]; then
-    cp "$CLAUDE_JSON" "$CLAUDE_JSON.bak"
-    echo "Backed up ~/.claude.json to ~/.claude.json.bak"
-fi
-
 # Remove orphaned directories
 removed_dirs=0
 for dname in "${orphaned_dirs[@]}"; do
@@ -144,7 +138,8 @@ if (( ${#orphaned_paths[@]} > 0 )); then
     for path in "${orphaned_paths[@]}"; do
         filter="$filter | del(.projects[$(jq -n --arg p "$path" '$p')])"
     done
-    jq "$filter" "$CLAUDE_JSON.bak" > "$CLAUDE_JSON"
+    tmpfile="$(mktemp)"
+    jq "$filter" "$CLAUDE_JSON" > "$tmpfile" && mv "$tmpfile" "$CLAUDE_JSON"
     echo "Removed ${#orphaned_paths[@]} entries from ~/.claude.json"
 fi
 
